@@ -1,0 +1,157 @@
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  getShort:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: getShort
+      CodeUri: src/getShort
+      Handler: function.handler
+      Runtime: ruby2.7
+      MemorySize: 512
+      Timeout: 10
+      Tracing: Active
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref shorts
+          TABLE_ARN: !GetAtt shorts.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref shorts
+      Events:
+        shortApiGETshort:
+          Type: Api
+          Properties:
+            Path: /{short}
+            Method: GET
+            RestApiId: !Ref shortApi
+  getShortLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${getShort}
+  shorts:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+  shortApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub
+        - ${ResourceName} From Stack ${AWS::StackName}
+        - ResourceName: shortApi
+      StageName: Prod
+      DefinitionBody:
+        openapi: '3.0'
+        info: {}
+        paths:
+          /{short}:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${getShort.Arn}/invocations
+              responses:
+                '302':
+                  description: Redirect to the full Url
+                  headers:
+                    Location:
+                      schema:
+                        type: string
+                      description: Full url to redirect to
+                '404':
+                  description: Short url not found
+          /:
+            post:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${postShort.Arn}/invocations
+              requestBody:
+                required: true
+                content:
+                  application/x-www-form-urlencoded:
+                    schema:
+                      required:
+                        - full_url
+                      type: object
+                      properties:
+                        full_url:
+                          description: The target URL. Must be between 3 and 500 characters.
+                          example: https://petfinder.com
+                          type: string
+                        short_url:
+                          description: The desired short URL. Only alpha numeric and - _ characters allowed. Must be between 4 and 100 characters. All characters (a-z) are lower cased
+                          example: doggo
+                          type: string
+              responses:
+                '201':
+                  description: Short was created
+                '400':
+                  description: The provided params are not valid
+                  content:
+                    application/json:
+                      schema:
+                        required:
+                          - errors
+                          - message
+                        type: object
+                        properties:
+                          errors:
+                            type: array
+                            description: Array of error messages
+                            example:
+                              - Short url only alpha numeric and - _ allowed
+                          message:
+                            type: string
+                            description: Bad request
+                            example: Bad request
+      EndpointConfiguration:
+        Type: REGIONAL
+      TracingEnabled: true
+  postShort:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: postShort
+      CodeUri: src/postShort
+      Handler: function.handler
+      Runtime: ruby2.7
+      MemorySize: 512
+      Timeout: 10
+      Tracing: Active
+      Events:
+        shortApiPOST:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+            RestApiId: !Ref shortApi
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref shorts
+          TABLE_ARN: !GetAtt shorts.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref shorts
+  postShortLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${postShort}
+Outputs:
+  apiUrl:
+    Description: Url of the api gateway
+    Value: !Sub https://${shortApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
