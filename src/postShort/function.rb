@@ -13,13 +13,20 @@ FOUR_OH_NINE = {
   body: 'requested short already taken'
 }
 
-VALID_PARAMS = ["short_url", "full_url"].freeze
+VALID_SHORT_URL_CHARS = /\A[a-zA-Z0-9\-_]+\z/
+VALID_PARAMS          = ['short_url', 'full_url'].freeze
 
 def parse(body)
   params = body&.split('&')
   return nil if params.empty?
 
   params.map { |p| p.split('=') }.select { |p| VALID_PARAMS.include?(p.first) }.to_h
+end
+
+def validate(params)
+  unless params['short_url'].match?(VALID_SHORT_URL_CHARS)
+    raise 'invalid character in given param'
+  end
 end
 
 def generate_short(params)
@@ -38,9 +45,9 @@ def handler(event:, context:)
 
   params = parse(event['body'])
   return FOUR_HUNDRED if params.empty?
+  validate(params)
 
   item = generate_short(params)
-  logger.info(item)
   client = Aws::DynamoDB::Client.new()
   put_params = {
     condition_expression: 'attribute_not_exists(pk)',
