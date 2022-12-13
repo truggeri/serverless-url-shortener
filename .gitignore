@@ -3,4 +3,4 @@
 .aws-composer/*
 .aws-sam/*
 
-.env.dev
+.dev.env
