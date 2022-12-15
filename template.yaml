@@ -7,8 +7,8 @@ Resources:
       Description: !Sub
         - Stack ${AWS::StackName} Function ${ResourceName}
         - ResourceName: getShort
-      CodeUri: src/getShort
-      Handler: function.handler
+      CodeUri: src
+      Handler: getShort.handler
       Runtime: ruby2.7
       MemorySize: 512
       Timeout: 10
@@ -127,8 +127,8 @@ Resources:
       Description: !Sub
         - Stack ${AWS::StackName} Function ${ResourceName}
         - ResourceName: postShort
-      CodeUri: src/postShort
-      Handler: function.handler
+      CodeUri: src
+      Handler: postShort.handler
       Runtime: ruby2.7
       MemorySize: 512
       Timeout: 10
@@ -142,6 +142,7 @@ Resources:
             RestApiId: !Ref shortApi
       Environment:
         Variables:
+          JWT_SECRET: some-secret
           TABLE_NAME: !Ref shorts
           TABLE_ARN: !GetAtt shorts.Arn
       Policies:
