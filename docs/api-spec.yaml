@@ -1,0 +1,98 @@
+openapi: "3.0.1"
+info:
+  title: "shortApi"
+  version: "2022-12-15T03:33:36Z"
+servers:
+- url: "https://short.truggeri.com"
+paths:
+  /{short}:
+    get:
+      parameters:
+      - name: "short"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "404":
+          description: "404 response"
+          content: {}
+        "302":
+          description: "302 response"
+          headers:
+            Location:
+              schema:
+                type: "string"
+          content: {}
+    delete:
+      parameters:
+      - name: "short_url"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "Authorization"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "short"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "404":
+          description: "404 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content: {}
+  /:
+    post:
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/MODELd3ed37"
+        required: true
+      responses:
+        "400":
+          description: "400 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MODELb8555c"
+        "201":
+          description: "201 response"
+          content: {}
+components:
+  schemas:
+    MODELd3ed37:
+      required:
+      - "full_url"
+      type: "object"
+      properties:
+        full_url:
+          type: "string"
+          description: "The target URL. Must be between 3 and 500 characters."
+        short_url:
+          type: "string"
+          description: "The desired short URL. Only alpha numeric and - _ characters\
+            \ allowed. Must be between 4 and 100 characters. All characters (a-z)\
+            \ are lower cased"
+    MODELb8555c:
+      required:
+      - "errors"
+      - "message"
+      type: "object"
+      properties:
+        message:
+          type: "string"
+          description: "Bad request"
+        errors:
+          type: "array"
+          description: "Array of error messages"
