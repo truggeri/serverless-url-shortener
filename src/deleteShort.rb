@@ -45,6 +45,7 @@ def handler(event:, context:)
   authorization = authenticate(event)
   return FOUR_OH_ONE if authorization.nil? || !authorize(data, authorization)
 
+  delete_short(short)
   {
     statusCode: 202,
   }

@@ -1,7 +1,16 @@
 require 'aws-sdk-dynamodb'
 
+def delete_short(short)
+  client = Aws::DynamoDB::Client.new
+  delete_params = {
+    key: { 'pk' => short }, 
+    table_name: ENV['TABLE_NAME'], 
+  }
+  client.delete_item(delete_params)
+end
+
 def load_short(short)
-  client = Aws::DynamoDB::Client.new()
+  client = Aws::DynamoDB::Client.new
   query_params = {
     expression_attribute_values: {
       ':v1' => short, 
@@ -16,7 +25,7 @@ def load_short(short)
 end
 
 def save_short(short)
-  client = Aws::DynamoDB::Client.new()
+  client = Aws::DynamoDB::Client.new
   put_params = {
     condition_expression: 'attribute_not_exists(pk)',
     item: short.to_h,
