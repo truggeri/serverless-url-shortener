@@ -1,5 +1,11 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/aws/serverless-application-model/develop/samtranslator/schema/schema.json
 Transform: AWS::Serverless-2016-10-31
+Parameters:
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    MinLength: 10
+    Description: Value used to sign deletion tokens
 Resources:
   getShort:
     Type: AWS::Serverless::Function
@@ -73,6 +79,32 @@ Resources:
                       description: Full url to redirect to
                 '404':
                   description: Short url not found
+            delete:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${deleteShort.Arn}/invocations
+              parameters:
+                - name: short_url
+                  in: path
+                  description: The short URL code
+                  required: true
+                  schema:
+                    type: string
+                - in: header
+                  name: Authorization
+                  schema:
+                    type: string
+                    format: bearer token
+                  required: true
+                  example: bearer jwen.dfho.efoisn
+              responses:
+                '200':
+                  description: The short URL was successfully removed
+                '401':
+                  description: The provided bearer is not authorized to remove this short URL
+                '404':
+                  description: Short URL could not be found
           /:
             post:
               x-amazon-apigateway-integration:
@@ -142,7 +174,7 @@ Resources:
             RestApiId: !Ref shortApi
       Environment:
         Variables:
-          JWT_SECRET: some-secret
+          JWT_SECRET: !Ref JwtSecret
           TABLE_NAME: !Ref shorts
           TABLE_ARN: !GetAtt shorts.Arn
       Policies:
@@ -153,6 +185,40 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       LogGroupName: !Sub /aws/lambda/${postShort}
+  deleteShort:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: deleteShort
+      CodeUri: src
+      Handler: deleteShort.handler
+      Runtime: ruby2.7
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Architectures:
+        - arm64
+      Events:
+        shortApiDELETEshort:
+          Type: Api
+          Properties:
+            Path: /{short}
+            Method: DELETE
+            RestApiId: !Ref shortApi
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JwtSecret
+          TABLE_NAME: !Ref shorts
+          TABLE_ARN: !GetAtt shorts.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref shorts
+  deleteShortLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${deleteShort}
 Outputs:
   apiUrl:
     Description: Url of the api gateway

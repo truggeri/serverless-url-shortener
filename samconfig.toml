@@ -1,0 +1,11 @@
+ version=0.1
+ 
+ [default.deploy.parameters]
+ stack_name = "short"
+ resolve_s3 = true
+ region = "us-west-2"
+ confirm_changeset = false
+ capabilities = "CAPABILITY_IAM"
+
+ [default.build.parameters]
+ no_beta_features = true
