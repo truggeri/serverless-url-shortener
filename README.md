@@ -9,3 +9,7 @@ This project makes use of three core AWS services, Api Gateway, Lambda and Dynam
 ## Deployment
 
 This project makes use of [AWS Application Composer](https://aws.amazon.com/application-composer/) to author an AWS SAM template.
+
+```bash
+sam deploy -t ./template.yaml --parameter-overrides JwtSecret=${JWT_SECRET}
+```
