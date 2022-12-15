@@ -1,6 +1,19 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/aws/serverless-application-model/develop/samtranslator/schema/schema.json
 Transform: AWS::Serverless-2016-10-31
 Parameters:
+  ApiStage:
+    Type: String
+    Default: Prod
+    Description: Name of the api stage
+  CertIdentifier:
+    Type: String
+    NoEcho: true
+    MinLength: 10
+    Description: The unique identifier (not arn), of the certificate to use with custom domain
+  DomainName:
+    Type: String
+    Default: short.truggeri.com
+    Description: Domain name for the api
   JwtSecret:
     Type: String
     NoEcho: true
@@ -58,7 +71,7 @@ Resources:
       Name: !Sub
         - ${ResourceName} From Stack ${AWS::StackName}
         - ResourceName: shortApi
-      StageName: Prod
+      StageName: !Ref ApiStage
       DefinitionBody:
         openapi: '3.0'
         info: {}
@@ -153,6 +166,11 @@ Resources:
       EndpointConfiguration:
         Type: REGIONAL
       TracingEnabled: true
+      Domain:
+        DomainName: !Ref DomainName
+        CertificateArn: !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${CertIdentifier}
+        EndpointConfiguration: REGIONAL
+        SecurityPolicy: TLS_1_2
   postShort:
     Type: AWS::Serverless::Function
     Properties:
@@ -222,4 +240,4 @@ Resources:
 Outputs:
   apiUrl:
     Description: Url of the api gateway
-    Value: !Sub https://${shortApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+    Value: !Sub https://${shortApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiStage}/
