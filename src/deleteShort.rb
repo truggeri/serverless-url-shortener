@@ -27,7 +27,7 @@ end
 
 def authorize(data, authorization)
   token_for_request = data['uuid'] == authorization[:uuid]
-  token_times_match = true #(authorization[:iat] - data['created_at'].to_i) < 10
+  token_times_match = (authorization[:iat] - Time.parse(data['created_at']).to_i) < 10
 
   return token_for_request && token_times_match
 end
