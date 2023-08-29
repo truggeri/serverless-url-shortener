@@ -28,7 +28,7 @@ Resources:
         - ResourceName: getShort
       CodeUri: src
       Handler: getShort.handler
-      Runtime: ruby2.7
+      Runtime: ruby3.2
       MemorySize: 512
       Timeout: 10
       Tracing: Active
@@ -179,7 +179,7 @@ Resources:
         - ResourceName: postShort
       CodeUri: src
       Handler: postShort.handler
-      Runtime: ruby2.7
+      Runtime: ruby3.2
       MemorySize: 512
       Timeout: 10
       Tracing: Active
@@ -211,7 +211,7 @@ Resources:
         - ResourceName: deleteShort
       CodeUri: src
       Handler: deleteShort.handler
-      Runtime: ruby2.7
+      Runtime: ruby3.2
       MemorySize: 3008
       Timeout: 30
       Tracing: Active
