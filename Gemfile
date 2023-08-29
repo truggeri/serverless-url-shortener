@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '2.7.0'
+ruby '3.2.0'
 
 gem 'aws-sdk-dynamodb', '~> 1'
 gem 'jwt'
